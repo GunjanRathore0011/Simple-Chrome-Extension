@@ -1,17 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // null here defaults to active tab of current window
-  chrome.tabs.executeScript(null, {
-    code: `
-      document.querySelector("title").innerText;
-    `
-  }, response => {
-    const pageData = response[0];
-
-    if (!pageData) {
-      console.log("Could not get data from page.");
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (!tab || !tab.id) {
+      console.log("No active tab found");
       return;
     }
 
-    document.getElementById("activeTabTitle").innerText = pageData;
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tab.id },
+        func: () => document.title
+      },
+      (results) => {
+        if (!results || !results[0] || results[0].result == null) {
+          console.log("Could not get data from page.");
+          return;
+        }
+
+        document.getElementById("activeTabTitle").innerText = results[0].result;
+      }
+    );
   });
 });
